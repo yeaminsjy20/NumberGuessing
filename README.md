@@ -2,6 +2,12 @@
 
 A simple command-line number guessing game written in Python. Pick a difficulty, then try to find the secret number before you run out of attempts.
 
+## Play online
+
+[Play Pixel Number Quest](https://pixel-number-quest0.vercel.app/)
+
+The browser version is available in `index.html`.
+
 ## How to play
 
 1. Choose a difficulty level.

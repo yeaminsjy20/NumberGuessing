@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Number Quest</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><text y='.9em' font-size='9'>💖</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2b1f4a; --panel:#fff4fb; --ink:#3a2a5c; --pink:#ff7eb6; --mint:#7fe8c4;
+  --sun:#ffd86b; --sky:#8ecbff; --red:#ff5e7a; --line:#3a2a5c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:var(--bg);
+  background-image:
+    linear-gradient(45deg,#33265a 25%,transparent 25%,transparent 75%,#33265a 75%),
+    linear-gradient(45deg,#33265a 25%,transparent 25%,transparent 75%,#33265a 75%);
+  background-size:32px 32px; background-position:0 0,16px 16px;
+  font-family:'Press Start 2P',ui-monospace,Menlo,monospace;
+  color:var(--ink); display:flex; justify-content:center; padding:20px 12px 40px;
+  image-rendering:pixelated;
+}
+.game{width:100%;max-width:460px}
+h1{color:var(--sun);font-size:18px;line-height:1.5;text-align:center;margin:8px 0 18px;
+  text-shadow:3px 3px 0 var(--pink),6px 6px 0 #000}
+.card{
+  background:var(--panel);border:4px solid var(--line);padding:18px;
+  box-shadow:0 0 0 4px var(--panel),0 0 0 8px var(--line),10px 12px 0 8px rgba(0,0,0,.35);
+  margin:0 8px;
+}
+.screen{display:none}.screen.on{display:block}
+p{font-size:10px;line-height:1.9;margin:0 0 12px}
+.center{text-align:center}
+.mascot{width:96px;height:96px;margin:0 auto 12px;display:block}
+.mascot.bounce{animation:bounce .5s steps(4) 2}
+.mascot.shake{animation:shake .4s steps(4)}
+@keyframes bounce{50%{transform:translateY(-14px)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+button,input{font-family:inherit;color:var(--ink)}
+.btn{
+  display:block;width:100%;background:var(--pink);border:4px solid var(--line);
+  padding:12px 8px;font-size:11px;cursor:pointer;margin-top:10px;
+  box-shadow:0 5px 0 var(--line);transition:none;
+}
+.btn:hover{background:#ff94c4}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--line)}
+.btn.mint{background:var(--mint)} .btn.sun{background:var(--sun)}
+.btn:focus-visible,input:focus-visible,.mute:focus-visible{outline:4px dashed var(--sky);outline-offset:2px}
+
+.levels .btn small{display:block;font-size:8px;margin-top:8px;opacity:.8}
+
+.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.hearts{display:flex;gap:4px;flex-wrap:wrap}
+.heart{width:20px;height:20px;transition:none}
+.heart.lost{filter:grayscale(1) brightness(1.6);opacity:.5}
+.range{font-size:10px;line-height:1.6;text-align:right}
+
+.bar{position:relative;height:22px;border:4px solid var(--line);background:#fff;margin:6px 0 14px}
+.bar .zone{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(90deg,var(--mint) 0 8px,#9ff2d6 8px 16px)}
+.bar-labels{display:flex;justify-content:space-between;font-size:8px;margin-top:-8px;margin-bottom:12px}
+
+.msg{min-height:44px;font-size:11px;line-height:1.8;text-align:center;padding:8px;border:4px dashed var(--line);background:#fff;margin-bottom:12px}
+.msg.low{background:#d9efff}.msg.high{background:#ffe3ea}.msg.err{background:#fff0b8}
+
+.row{display:flex;gap:8px}
+input[type=number]{
+  flex:1;min-width:0;border:4px solid var(--line);background:#fff;font-size:16px;padding:10px;text-align:center;
+  -moz-appearance:textfield;
+}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.row .btn{width:auto;margin-top:0;padding:10px 14px}
+
+.history{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;min-height:28px}
+.chip{border:3px solid var(--line);font-size:9px;padding:5px 6px;background:var(--sky)}
+.chip.high{background:#ffb3c4}.chip.low{background:#a9dcff}.chip.win{background:var(--mint)}
+
+.big{font-size:34px;color:var(--pink);text-shadow:3px 3px 0 var(--line);margin:6px 0 14px}
+.mute{position:fixed;top:10px;right:10px;background:var(--panel);border:3px solid var(--line);
+  font-size:14px;padding:6px 8px;cursor:pointer;box-shadow:0 3px 0 var(--line)}
+.stats{font-size:8px;text-align:center;color:#d9c9ff;margin-top:22px;line-height:1.8}
+@media (prefers-reduced-motion:reduce){.mascot.bounce,.mascot.shake{animation:none}}
+@media (max-width:380px){h1{font-size:14px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<button class="mute" id="mute" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+
+<main class="game">
+  <h1>PIXEL<br>NUMBER QUEST</h1>
+
+  <div class="card">
+    <!-- START -->
+    <section class="screen on" id="s-start">
+      <svg class="mascot" id="m-start" viewBox="0 0 12 12" shape-rendering="crispEdges"></svg>
+      <p class="center">Hi! I'm Bit. I'm hiding a secret number. Can you find it before your hearts run out?</p>
+      <div class="levels">
+        <button class="btn mint" data-level="easy">EASY<small>1-10 · 4 hearts</small></button>
+        <button class="btn sun" data-level="medium">MEDIUM<small>1-50 · 6 hearts</small></button>
+        <button class="btn" data-level="hard">HARD<small>1-100 · 8 hearts</small></button>
+      </div>
+    </section>
+
+    <!-- PLAY -->
+    <section class="screen" id="s-play">
+      <div class="hud">
+        <div class="hearts" id="hearts" aria-label="Attempts left"></div>
+        <div class="range" id="rangeText"></div>
+      </div>
+      <svg class="mascot" id="m-play" viewBox="0 0 12 12" shape-rendering="crispEdges"></svg>
+      <div class="bar" aria-hidden="true"><div class="zone" id="zone"></div></div>
+      <div class="bar-labels"><span id="lblMin">1</span><span id="lblMax">10</span></div>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      <div class="row">
+        <input type="number" id="guess" inputmode="numeric" placeholder="?" aria-label="Your guess">
+        <button class="btn" id="go">GUESS</button>
+      </div>
+      <div class="history" id="history" aria-label="Your guesses"></div>
+    </section>
+
+    <!-- END -->
+    <section class="screen center" id="s-end">
+      <svg class="mascot" id="m-end" viewBox="0 0 12 12" shape-rendering="crispEdges"></svg>
+      <p id="endTitle" style="font-size:14px"></p>
+      <div class="big" id="endNum"></div>
+      <p id="endText"></p>
+      <button class="btn mint" id="again">PLAY AGAIN</button>
+      <button class="btn" id="menu">CHANGE LEVEL</button>
+    </section>
+  </div>
+
+  <div class="stats" id="stats"></div>
+</main>
+
+<script>
+(function(){
+  const LEVELS = { easy:{max:10,tries:4}, medium:{max:50,tries:6}, hard:{max:100,tries:8} };
+  const $ = id => document.getElementById(id);
+  const screens = { start:$('s-start'), play:$('s-play'), end:$('s-end') };
+
+  /* ---------- Pixel mascot (12x12 grid) ---------- */
+  const FACES = {
+    happy:  ['..3333333...','.322222223..'],
+  };
+  function drawMascot(svg, mood){
+    // body color map: p=pink, d=dark, w=white, c=cheek, y=sun
+    const base = [
+      '....pppp....',
+      '..pppppppp..',
+      '.pppppppppp.',
+      '.pppppppppp.',
+      '.pppppppppp.',
+      '.pppppppppp.',
+      '.pppppppppp.',
+      '.pppppppppp.',
+      '..pppppppp..',
+      '..pppppppp..',
+      '..pp....pp..',
+      '..dd....dd..'
+    ].map(r=>r.split(''));
+    const set=(x,y,c)=>{base[y][x]=c};
+    // cheeks
+    set(2,6,'c');set(3,6,'c');set(8,6,'c');set(9,6,'c');
+    if(mood==='happy'||mood==='idle'){ set(4,4,'d');set(4,5,'d');set(7,4,'d');set(7,5,'d'); set(5,7,'d');set(6,7,'d'); }
+    if(mood==='win'){ set(3,5,'d');set(4,4,'d');set(5,5,'d'); set(6,5,'d');set(7,4,'d');set(8,5,'d'); set(4,7,'d');set(5,8,'d');set(6,8,'d');set(7,7,'d'); }
+    if(mood==='think'){ set(4,4,'d');set(4,5,'d');set(7,4,'d');set(7,5,'d'); set(5,8,'d');set(6,8,'d'); set(9,1,'y');set(10,0,'y'); }
+    if(mood==='sad'){ set(4,4,'d');set(4,5,'d');set(7,4,'d');set(7,5,'d'); set(5,8,'d');set(6,8,'d');set(4,9,'d');set(7,9,'d'); set(4,6,'b'); }
+    const colors={p:'#ff7eb6',d:'#3a2a5c',c:'#ffd0e6',y:'#ffd86b',b:'#8ecbff'};
+    let out='';
+    base.forEach((row,y)=>row.forEach((c,x)=>{ if(colors[c]) out+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[c]}"/>`; }));
+    // ears / antenna highlight
+    out+=`<rect x="3" y="2" width="1" height="1" fill="#ffd0e6"/>`;
+    svg.innerHTML=out;
+  }
+  function mascot(id, mood, anim){
+    const el=$(id); drawMascot(el,mood);
+    el.classList.remove('bounce','shake'); void el.getBoundingClientRect();
+    if(anim) el.classList.add(anim);
+  }
+
+  /* ---------- Sound (WebAudio chiptune beeps) ---------- */
+  let ctx=null, muted=false;
+  $('mute').onclick=()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; };
+  function beep(freq,dur,type='square',delay=0){
+    if(muted) return;
+    try{
+      ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+      const t=ctx.currentTime+delay, o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type; o.frequency.value=freq; g.gain.setValueAtTime(.06,t);
+      g.gain.exponentialRampToValueAtTime(.001,t+dur);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+dur);
+    }catch(e){}
+  }
+  const sfx={
+    click:()=>beep(520,.08),
+    low:()=>{beep(330,.1);beep(260,.12,'square',.1)},
+    high:()=>{beep(330,.1);beep(420,.12,'square',.1)},
+    err:()=>beep(160,.2,'sawtooth'),
+    win:()=>[523,659,784,1047].forEach((f,i)=>beep(f,.15,'square',i*.12)),
+    lose:()=>[392,330,262,196].forEach((f,i)=>beep(f,.2,'triangle',i*.18))
+  };
+
+  /* ---------- State ---------- */
+  let state, wins=0, plays=0, lastLevel='medium';
+  try{ wins=+localStorage.getItem('pnq_wins')||0; plays=+localStorage.getItem('pnq_plays')||0; }catch(e){}
+
+  function show(name){
+    Object.entries(screens).forEach(([k,el])=>el.classList.toggle('on',k===name));
+    renderStats();
+  }
+  function renderStats(){
+    $('stats').textContent = plays ? `WINS ${wins} / GAMES ${plays}` : '';
+  }
+  function save(){ try{ localStorage.setItem('pnq_wins',wins); localStorage.setItem('pnq_plays',plays);}catch(e){} }
+
+  const heartSVG = lost => `<svg class="heart ${lost?'lost':''}" viewBox="0 0 8 7" shape-rendering="crispEdges">
+    <path fill="${'#ff5e7a'}" d="M1 0h2v1h1v-1h2v1h1v2h-1v1h-1v1h-1v1h-2v-1h-1v-1h-1v-1h-1v-2h1z" transform="translate(0 0)"/>
+    <rect x="1" y="1" width="1" height="1" fill="#fff"/></svg>`;
+
+  function startGame(level){
+    lastLevel=level;
+    const L=LEVELS[level];
+    state={ max:L.max, tries:L.tries, left:L.tries,
+      secret:Math.floor(Math.random()*L.max)+1, lo:1, hi:L.max, guesses:[], over:false };
+    $('guess').min=1; $('guess').max=L.max; $('guess').value='';
+    $('history').innerHTML='';
+    setMsg(`I'm thinking of a number from 1 to ${L.max}.`);
+    renderPlay(); mascot('m-play','idle');
+    show('play'); $('guess').focus();
+  }
+
+  function renderPlay(){
+    $('hearts').innerHTML = Array.from({length:state.tries},(_,i)=>heartSVG(i>=state.left)).join('');
+    $('rangeText').innerHTML = `${state.left} LEFT`;
+    $('lblMin').textContent=state.lo; $('lblMax').textContent=state.hi;
+    const span=state.max-1||1;
+    const left=((state.lo-1)/span)*100, width=((state.hi-state.lo)/span)*100;
+    const z=$('zone'); z.style.left=left+'%'; z.style.width=Math.max(width,2)+'%';
+  }
+  function setMsg(text,cls){ const m=$('msg'); m.textContent=text; m.className='msg '+(cls||''); }
+
+  function submit(){
+    if(!state||state.over) return;
+    const raw=$('guess').value.trim();
+    if(!/^\d+$/.test(raw)){ setMsg('Please enter a whole number.','err'); sfx.err(); return; }
+    const g=parseInt(raw,10);
+    if(g<1||g>state.max){ setMsg(`Pick a number from 1 to ${state.max}.`,'err'); sfx.err(); return; }
+    if(state.guesses.some(x=>x.n===g)){ setMsg(`You already tried ${g}. Pick a new one!`,'err'); sfx.err(); return; }
+
+    state.left--;
+    $('guess').value='';
+    let kind;
+    if(g===state.secret) kind='win';
+    else if(g<state.secret){ kind='low'; state.lo=Math.max(state.lo,g+1); setMsg(`${g} is too low!  Go higher.`,'low'); sfx.low(); mascot('m-play','think','shake'); }
+    else { kind='high'; state.hi=Math.min(state.hi,g-1); setMsg(`${g} is too high!  Go lower.`,'high'); sfx.high(); mascot('m-play','think','shake'); }
+
+    state.guesses.push({n:g,kind});
+    const chip=document.createElement('span'); chip.className='chip '+kind;
+    chip.textContent = g + (kind==='low'?' ▲':kind==='high'?' ▼':' ★');
+    $('history').appendChild(chip);
+    renderPlay();
+
+    if(kind==='win') return end(true);
+    if(state.left===0) return end(false);
+    $('guess').focus();
+  }
+
+  function end(won){
+    state.over=true; plays++; if(won) wins++; save();
+    setTimeout(()=>{
+      const used=state.tries-state.left;
+      $('endTitle').textContent = won ? 'YOU WIN!' : 'GAME OVER';
+      $('endNum').textContent = state.secret;
+      $('endText').textContent = won
+        ? `You found it in ${used} ${used===1?'guess':'guesses'}!`
+        : `Out of hearts! The number was ${state.secret}.`;
+      mascot('m-end', won?'win':'sad', won?'bounce':'shake');
+      won?sfx.win():sfx.lose();
+      show('end'); $('again').focus();
+    }, 600);
+  }
+
+  /* ---------- Events ---------- */
+  document.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{ sfx.click(); startGame(b.dataset.level); });
+  $('go').onclick=submit;
+  $('guess').addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
+  $('again').onclick=()=>{ sfx.click(); startGame(lastLevel); };
+  $('menu').onclick=()=>{ sfx.click(); mascot('m-start','happy'); show('start'); };
+
+  mascot('m-start','happy','bounce'); renderStats();
+})();
+</script>
+</body>
+</html>
